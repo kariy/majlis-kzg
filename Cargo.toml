@@ -1,8 +1,15 @@
 [package]
-name = "majlis-kzg"
-version = "0.1.0"
-edition = "2021"
+    name    = "majlis-kzg"
+    version = "0.1.0"
+    edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+    # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+    color-eyre = "0.6.2"
+    reqwest    = { version = "0.11.14", features = [ "json" ] }
+    serde      = { version = "1.0.154", features = [ "derive" ] }
+    serde_json = "1.0.94"
+thiserror = "1.0.39"
+    tokio      = { version = "1.26.0", features = [ "full" ] }
+    url        = "2.3.1"

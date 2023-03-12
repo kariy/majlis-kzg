@@ -1,12 +1,34 @@
-use color_eyre::Result;
-use reqwest::{get, Client, RequestBuilder};
+use reqwest::{get, Client, RequestBuilder, StatusCode};
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 pub mod types;
 
 use types::{AuthResponse, BatchTranscript, CeremonyStatus, TryContributeResponse};
+use types::{BatchContribution, ContributionReceipt};
 
-use self::types::{BatchContribution, ContributionError, ContributionReceipt};
+use self::types::{ContributionAbortError, ContributionError, TryContributeError};
+
+#[derive(Debug, thiserror::Error)]
+pub enum SequencerClientError<E> {
+    #[allow(unused)]
+    #[error(transparent)]
+    JsonError(serde_json::Error),
+    #[error(transparent)]
+    TransportError(reqwest::Error),
+    #[error(transparent)]
+    SequencerError(SequencerErrorInner<E>),
+}
+
+#[cfg_attr(test, derive(PartialEq, Eq))]
+#[derive(Debug, Serialize, Deserialize, thiserror::Error)]
+#[error("Contribution error: code={code}, error=\"{error}\"")]
+pub struct SequencerErrorInner<E> {
+    code: E,
+    error: String,
+}
+
+type Result<T, E> = std::result::Result<T, SequencerClientError<E>>;
 
 pub struct SequencerClient {
     url: Url,
@@ -17,71 +39,90 @@ impl SequencerClient {
         Self { url }
     }
 
-    pub async fn status(&self) -> Result<CeremonyStatus> {
-        let res = get(format!("{}info/status", self.url))
-            .await?
-            .error_for_status()?
-            .json::<CeremonyStatus>()
-            .await?;
-        Ok(res)
-    }
+    pub async fn status(&self) -> Result<CeremonyStatus, ()> {
+        let res = get(format!("{}info/status", self.url)).await?;
 
-    pub async fn current_state(&self) -> Result<BatchTranscript> {
-        let res = get(format!("{}info/current_state", self.url))
-            .await?
-            .error_for_status()?
-            .json::<BatchTranscript>()
-            .await?;
-        Ok(res)
-    }
-
-    pub async fn request_auth_link(&self) -> Result<AuthResponse> {
-        let res = get(format!("{}auth/request_link", self.url))
-            .await?
-            .error_for_status()?
-            .json()
-            .await?;
-        Ok(res)
-    }
-
-    pub async fn try_contribute(
-        &self,
-        session_id: impl AsRef<str>,
-    ) -> Result<TryContributeResponse> {
-        let res = self
-            ._authenticated_post("/lobby/try_contribute", session_id)
-            .send()
-            .await?;
-
-        Ok(res.json::<TryContributeResponse>().await?)
-    }
-
-    pub async fn contribute(
-        &self,
-        contributions: &BatchContribution,
-        session_id: impl AsRef<str>,
-    ) -> std::result::Result<ContributionReceipt, ContributionError> {
-        let path = "contribute";
-
-        let res = self
-            ._authenticated_post(path, session_id)
-            .json(contributions)
-            .send()
-            .await
-            .unwrap();
-
-        if res.status().is_success() {
-            let data = res.json().await.unwrap();
-            Ok(data)
-        } else {
-            let err = res.json().await.unwrap();
-            Err(err)
+        match res.status() {
+            StatusCode::OK => Ok(res.json().await?),
+            _ => unreachable!("unknown response code"),
         }
     }
 
-    pub async fn abort_contribution(&self) -> Result<()> {
-        let path = "/contribution/abort";
-        todo!("abort_contribution needs implementation")
+    pub async fn current_state(&self) -> Result<BatchTranscript, ()> {
+        let res = get(format!("{}info/current_state", self.url)).await?;
+
+        match res.status() {
+            StatusCode::OK => Ok(res.json().await?),
+            _ => unreachable!("unknown response code"),
+        }
+    }
+
+    pub async fn request_auth_link(&self) -> Result<AuthResponse, ()> {
+        let res = get(format!("{}auth/request_link", self.url)).await?;
+
+        match res.status() {
+            StatusCode::OK => Ok(res.json().await?),
+            _ => unreachable!("unknown response code"),
+        }
+    }
+
+    pub async fn try_contribute<T: AsRef<str>>(
+        &self,
+        session_id: T,
+    ) -> Result<TryContributeResponse, TryContributeError> {
+        let res = self
+            ._authenticated_post("lobby/try_contribute", session_id)
+            .send()
+            .await?;
+
+        match res.status() {
+            StatusCode::OK => Ok(res.json().await?),
+            StatusCode::BAD_REQUEST | StatusCode::UNAUTHORIZED => {
+                let err = res.json().await?;
+                Err(SequencerClientError::SequencerError(err))
+            }
+            _ => unreachable!("unknown response code"),
+        }
+    }
+
+    pub async fn contribute<T: AsRef<str>>(
+        &self,
+        contributions: &BatchContribution,
+        session_id: T,
+    ) -> Result<ContributionReceipt, ContributionError> {
+        let res = self
+            ._authenticated_post("contribute", session_id)
+            .json(contributions)
+            .send()
+            .await?;
+
+        match res.status() {
+            StatusCode::OK => Ok(res.json().await?),
+            StatusCode::BAD_REQUEST => {
+                let err = res.json().await?;
+                Err(SequencerClientError::SequencerError(err))
+            }
+            _ => unreachable!("unknown response code"),
+        }
+    }
+
+    pub async fn abort_contribution<T: AsRef<str>>(
+        &self,
+        session_id: T,
+    ) -> Result<(), ContributionAbortError> {
+        let res = self
+            ._authenticated_post("contribution/abort", session_id)
+            .send()
+            .await?;
+
+        match res.status() {
+            StatusCode::OK => Ok(res.json().await?),
+            StatusCode::BAD_REQUEST => {
+                let err = res.json().await?;
+                Err(SequencerClientError::SequencerError(err))
+            }
+            _ => unreachable!("unknown response code"),
+        }
     }
 
     fn _authenticated_post<T, U>(&self, path: T, session_id: U) -> RequestBuilder
@@ -92,5 +133,34 @@ impl SequencerClient {
         Client::new()
             .post(format!("{}{}", self.url, path.as_ref()))
             .bearer_auth(session_id.as_ref())
+    }
+}
+
+impl<E> From<reqwest::Error> for SequencerClientError<E> {
+    fn from(value: reqwest::Error) -> Self {
+        Self::TransportError(value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{types::TryContributeError, *};
+    use serde_json::json;
+
+    #[test]
+    fn test_deserialize_error() {
+        let json = json!({
+            "code": "TryContributeError::RateLimited",
+            "error": "call came too early. rate limited"
+        })
+        .to_string();
+        let expected = SequencerErrorInner {
+            code: TryContributeError::RateLimited,
+            error: "call came too early. rate limited".to_string(),
+        };
+
+        let err: SequencerErrorInner<TryContributeError> = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(err, expected);
     }
 }

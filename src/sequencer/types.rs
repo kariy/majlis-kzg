@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+use crate::contribution::types::BatchContribution;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CeremonyStatus {
     pub lobby_size: i32,
@@ -12,55 +14,6 @@ pub struct CeremonyStatus {
 pub struct AuthResponse {
     pub eth_auth_url: String,
     pub github_auth_url: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct PowersOfTau {
-    #[serde(rename = "G1Powers")]
-    pub g1_powers: Vec<String>,
-    #[serde(rename = "G2Powers")]
-    pub g2_powers: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Witness {
-    #[serde(rename = "potPubkeys")]
-    pub pot_pubkeys: Vec<String>,
-    #[serde(rename = "runningProducts")]
-    pub running_products: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Transcript {
-    #[serde(rename = "numG1Powers")]
-    pub num_g1_powers: i32,
-    #[serde(rename = "numG2Powers")]
-    pub num_g2_powers: i32,
-    #[serde(rename = "powersOfTau")]
-    pub powers_of_tau: PowersOfTau,
-    pub witness: Witness,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BatchTranscript {
-    pub transcripts: Vec<Transcript>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Contribution {
-    #[serde(rename = "numG1Powers")]
-    pub num_g1_powers: i32,
-    #[serde(rename = "numG2Powers")]
-    pub num_g2_powers: i32,
-    #[serde(rename = "powersOfTau")]
-    pub powers_of_tau: PowersOfTau,
-    #[serde(rename = "potPubkey")]
-    pub pot_pubkey: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BatchContribution {
-    pub contributions: Vec<Contribution>,
 }
 
 #[derive(Serialize, Deserialize)]

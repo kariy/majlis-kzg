@@ -4,10 +4,9 @@ use url::Url;
 
 pub mod types;
 
-use types::{AuthResponse, BatchTranscript, CeremonyStatus, TryContributeResponse};
-use types::{BatchContribution, ContributionReceipt};
-
-use self::types::{ContributionAbortError, ContributionError, TryContributeError};
+use crate::contribution::types::{BatchContribution, BatchTranscript};
+use types::{AuthResponse, CeremonyStatus, ContributionReceipt, TryContributeResponse};
+use types::{ContributionAbortError, ContributionError, TryContributeError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum SequencerClientError<E> {

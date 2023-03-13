@@ -14,11 +14,11 @@ pub struct AuthResponse {
     pub github_auth_url: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PowersOfTau {
     #[serde(rename = "G1Powers")]
     pub g1_powers: Vec<String>,
-    #[serde(rename = "G1Powers")]
+    #[serde(rename = "G2Powers")]
     pub g2_powers: Vec<String>,
 }
 
@@ -46,12 +46,16 @@ pub struct BatchTranscript {
     pub transcripts: Vec<Transcript>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Contribution {
+    #[serde(rename = "numG1Powers")]
     pub num_g1_powers: i32,
+    #[serde(rename = "numG2Powers")]
     pub num_g2_powers: i32,
-    pub pot_pubkey: String,
+    #[serde(rename = "powersOfTau")]
     pub powers_of_tau: PowersOfTau,
+    #[serde(rename = "potPubkey")]
+    pub pot_pubkey: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

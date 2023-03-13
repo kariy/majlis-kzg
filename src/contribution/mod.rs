@@ -45,11 +45,25 @@ pub fn subgroup_checks(batch_contribution: BatchContribution) -> bool {
     !has_invalid
 }
 
+// Perform the ceremony
+pub fn update_batch(batch_contribution: &mut BatchContribution) {
+    let mut contributions = batch_contribution.contributions.clone();
+
+    contributions = contributions
+        .into_iter()
+        .par_bridge()
+        .map(move |contr| {
+            let x = generate_random_scalar();
+            update_powers_of_tau(contr, x)
+        })
+        .collect::<Vec<Contribution>>();
+
+    batch_contribution.contributions = contributions;
+}
+
 // TODO: for each contribution, the `x` scalar must be different
 ///  Updates the Powers of Tau within a sub-ceremony by multiplying each with a successive power of the secret x.
-pub fn update_powers_of_tau(contribution: Contribution, x: Scalar) -> Contribution {
-    let mut contribution = contribution;
-
+fn update_powers_of_tau(mut contribution: Contribution, x: Scalar) -> Contribution {
     let mut x_i: Scalar = Scalar::one();
     for i in 0..(contribution.num_g1_powers as usize) {
         let power1 = contribution.powers_of_tau.g1_powers[i].as_str();
@@ -71,7 +85,6 @@ pub fn update_powers_of_tau(contribution: Contribution, x: Scalar) -> Contributi
 
         x_i = x_i * x;
     }
-
     contribution
 }
 

@@ -38,7 +38,7 @@ impl SequencerClient {
         Self { url }
     }
 
-    pub async fn status(&self) -> Result<CeremonyStatus, ()> {
+    pub async fn status(&self) -> Result<CeremonyStatus, String> {
         let res = get(format!("{}info/status", self.url)).await?;
 
         match res.status() {
@@ -47,7 +47,7 @@ impl SequencerClient {
         }
     }
 
-    pub async fn current_state(&self) -> Result<BatchTranscript, ()> {
+    pub async fn current_state(&self) -> Result<BatchTranscript, String> {
         let res = get(format!("{}info/current_state", self.url)).await?;
 
         match res.status() {
@@ -56,7 +56,7 @@ impl SequencerClient {
         }
     }
 
-    pub async fn request_auth_link(&self) -> Result<AuthResponse, ()> {
+    pub async fn request_auth_link(&self) -> Result<AuthResponse, String> {
         let res = get(format!("{}auth/request_link", self.url)).await?;
 
         match res.status() {

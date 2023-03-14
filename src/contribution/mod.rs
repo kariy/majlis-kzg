@@ -88,11 +88,9 @@ fn update_powers_of_tau(mut contribution: Contribution, x: Scalar) -> Contributi
     contribution
 }
 
-pub fn update_witness(contribution: Contribution, x: Scalar) -> Contribution {
-    let mut contribution = contribution;
+pub fn update_witness(contribution: &mut Contribution, x: Scalar) {
     let new_pot_pubkey = G2Affine::from(G2Affine::generator() * x);
     contribution.pot_pubkey = format!("0x{}", hex::encode(new_pot_pubkey.to_compressed()));
-    contribution
 }
 
 #[cfg(test)]

@@ -23,8 +23,8 @@ pub enum SequencerClientError<E> {
 #[derive(Debug, Serialize, Deserialize, thiserror::Error)]
 #[error("Contribution error: code={code}, error=\"{error}\"")]
 pub struct SequencerErrorInner<E> {
-    code: E,
-    error: String,
+    pub code: E,
+    pub error: String,
 }
 
 type Result<T, E> = std::result::Result<T, SequencerClientError<E>>;

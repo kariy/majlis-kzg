@@ -51,7 +51,24 @@ Click the link below to authenticate and obtain your session ID :
     );
 
     let session_id = Text::new("Enter your session ID : ").prompt()?;
+    println!("");
     Ok(session_id)
 }
 
-// pub fn
+pub fn prompt_title() {
+    let title = r#"
+     __    __     ______       __     __         __     ______    
+    /\ "-./  \   /\  __ \     /\ \   /\ \       /\ \   /\  ___\   
+    \ \ \-./\ \  \ \  __ \   _\_\ \  \ \ \____  \ \ \  \ \___  \  
+     \ \_\ \ \_\  \ \_\ \_\ /\_____\  \ \_____\  \ \_\  \/\_____\ 
+      \/_/  \/_/   \/_/\/_/ \/_____/   \/_____/   \/_/   \/_____/ 
+     __  __     ______     ______                                 
+    /\ \/ /    /\___  \   /\  ___\                                
+    \ \  _"-.  \/_/  /__  \ \ \__ \                               
+     \ \_\ \_\   /\_____\  \ \_____\                              
+      \/_/\/_/   \/_____/   \/_____/                              
+
+"#;
+
+    println!("{title}");
+}

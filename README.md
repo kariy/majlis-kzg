@@ -13,7 +13,7 @@ It's a multi-party ceremony: each contributor creates a secret and runs a comput
 ## Cryptographic libraries
 
 - [`ChaCha20`](https://rust-random.github.io/rand/rand_chacha/struct.ChaCha20Rng.html) CSPRNG for generating the secrets
-- [`bls12_381`](https://docs.rs/bls12_381/latest/bls12_381/) 
-- [`blsful`](https://docs.rs/blsful/1.1.1/blsful/) BLS12 381 Signature
+- [`bls12_381`](https://docs.rs/bls12_381/latest/bls12_381/) BLS12-381 curve
+- [`blsful`](https://docs.rs/blsful/1.1.1/blsful/) BLS Signature over the BLS12-381 curve
 
 
